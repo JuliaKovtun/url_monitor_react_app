@@ -1,16 +1,33 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from "react-router-dom";
-import API from "../api/axios";
-import Registration from "./auth/Registration";
-import Login from "./auth/Login";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import Navbar from "./Navbar";
 import Dashboard from "./Dashboard";
-import Home from "./Home";
-import "bootstrap/dist/css/bootstrap.min.css";
+import Login from "./auth/Login";
+import Signup from "./auth/Registration";
+import API from "../api/axios";
+import { jwtDecode } from "jwt-decode";
+import Registration from "./auth/Registration";
+import UrlMonitorDashboard from "./UrlMonitorDashboard";
 
 const App = () => {
   const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
+    const token = localStorage.getItem("token");
+
+    if (storedUser && token) {
+      try {
+        const decodedToken = jwtDecode(token);
+        if (decodedToken.exp * 1000 < Date.now()) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          return null;
+        }
+        return JSON.parse(storedUser);
+      } catch (error) {
+        return null;
+      }
+    }
+    return null;
   });
 
   useEffect(() => {
@@ -31,57 +48,16 @@ const App = () => {
     }
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setUser(null);
-  };
-
   return (
     <Router>
-      <nav className="navbar navbar-expand-lg navbar-light bg-light">
-        <div className="container">
-          <Link className="navbar-brand" to="/">
-            MyApp
-          </Link>
-          <div className="collapse navbar-collapse">
-            <ul className="navbar-nav ms-auto">
-              {user ? (
-                <>
-                  <li className="nav-item">
-                    <span className="nav-link">{user.email}</span>
-                  </li>
-                  <li className="nav-item">
-                    <button className="btn btn-outline-danger" onClick={handleLogout}>
-                      Logout
-                    </button>
-                  </li>
-                </>
-              ) : (
-                <>
-                  <li className="nav-item">
-                    <Link className="nav-link" to="/login">
-                      Login
-                    </Link>
-                  </li>
-                  <li className="nav-item">
-                    <Link className="nav-link" to="/registration">
-                      Signup
-                    </Link>
-                  </li>
-                </>
-              )}
-            </ul>
-          </div>
-        </div>
-      </nav>
-
+      <Navbar user={user} setUser={setUser} />
       <div className="container mt-4">
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
           <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
-          <Route path="/registration" element={<Registration setUser={setUser} />} />
-          <Route path="/login" element={<Login setUser={setUser} />} />
+          <Route path="/login"  element={<Login setUser={setUser} />} />
+          <Route path="/signup" element={<Registration />} />
+          <Route path="/url_monitors" element={user ? <UrlMonitorDashboard /> : <Navigate to="/login" /> } />
         </Routes>
       </div>
     </Router>

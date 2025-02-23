@@ -1,21 +1,28 @@
-import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
-
-const socket = io("ws://localhost:3000/cable");
+import { useState, useEffect } from "react";
+import * as ActionCable from "@rails/actioncable";
 
 const useWebSocket = () => {
-  const [statusUpdates, setStatusUpdates] = useState([]);
+  const [updates, setUpdates] = useState([]);
 
   useEffect(() => {
-    socket.on("status_updates", (data) => {
-      console.log("Received WebSocket data:", data);
-      setStatusUpdates((prev) => [...prev, data]);
-    });
+    const cable = ActionCable.createConsumer("ws://localhost:3000/cable");
 
-    return () => socket.disconnect();
+    const subscription = cable.subscriptions.create(
+      { channel: "CheckUpdatesChannel" },
+      {
+        received: (data) => {
+          console.log("Received WebSocket update:", data);
+          setUpdates((prev) => [...prev, data]);
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  return statusUpdates;
+  return updates;
 };
 
 export default useWebSocket;

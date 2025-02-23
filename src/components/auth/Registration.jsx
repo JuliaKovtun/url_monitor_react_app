@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../../api/axios"; // Axios instance
+import API from "../../api/axios";
 import { Link } from "react-router-dom";
 
 const Registration = ({ setUser }) => {
@@ -24,10 +24,9 @@ const Registration = ({ setUser }) => {
       const token = response.headers["authorization"]?.split(" ")[1];
       if (token) {
         localStorage.setItem("token", token);
-        debugger;
         localStorage.setItem("user", JSON.stringify(response.data.data.email));
         setUser(response.data.data.email);
-        navigate("/dashboard");
+        navigate("/url_monitors");
       } else {
         setError("Signup successful, but login failed.");
       }

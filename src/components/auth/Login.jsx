@@ -1,12 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
-import { Link } from "react-router-dom";
 
 const Login = ({ setUser }) => {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -14,16 +13,20 @@ const Login = ({ setUser }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+
     try {
       const response = await API.post("/login", { user: formData });
-  
+
       const token = response.headers["authorization"]?.split(" ")[1];
       if (token) {
-        debugger;
         localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(response.data.status.data.user.email));
-        setUser(response.data.status.data.user.email);
-        navigate("/dashboard");
+
+        const userData = response.data.status.data.user.email;
+        localStorage.setItem("user", JSON.stringify(userData));
+        setUser(userData);
+
+        navigate("/url_monitors");
       } else {
         setError("Login failed! No token received.");
       }
@@ -33,41 +36,34 @@ const Login = ({ setUser }) => {
   };
 
   return (
-    <div className="container mt-5">
-      <div className="card p-4 shadow">
-        <h2 className="text-center">Login</h2>
-        {error && <p className="text-danger text-center">{error}</p>}
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <input
-              className="form-control"
-              type="email"
-              name="email"
-              placeholder="Email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="mb-3">
-            <input
-              className="form-control"
-              type="password"
-              name="password"
-              placeholder="Password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-            />
-          </div>
-          <button type="submit" className="btn btn-primary w-100">
-            Login
-          </button>
-        </form>
-        <p className="text-center mt-3">
-          Don't have an account? <Link to="/registration">Sign up</Link>
-        </p>
-      </div>
+    <div className="container">
+      <h1>Login</h1>
+      {error && <div className="alert alert-danger">{error}</div>}
+      <form onSubmit={handleSubmit}>
+        <div className="mb-3">
+          <label className="form-label">Email</label>
+          <input
+            type="email"
+            name="email"
+            className="form-control"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Password</label>
+          <input
+            type="password"
+            name="password"
+            className="form-control"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <button type="submit" className="btn btn-primary">Login</button>
+      </form>
     </div>
   );
 };
