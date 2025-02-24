@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import API from "../api/axios";
 
 
-const UrlMonitorForm = () => {
+const UrlMonitorForm = ( { onSuccess }) => {
   const [formData, setFormData] = useState({
     name: '',
     url: '',
@@ -23,13 +23,15 @@ const UrlMonitorForm = () => {
       const token = localStorage.getItem("token");
       const response = await API.post("/url_monitors", { url_monitor: formData, headers: { Authorization: `Bearer ${token}` } })
       if (response.status === 201) {
+        const newMonitor = response.data;
+        newMonitor.checks = [];
+        onSuccess(newMonitor);
         setFormData({
           name: '',
           url: '',
           check_interval: ''
         });
 
-        onSuccess(response.data);
       } else {
         console.error('Failed to create URL Monitor');
       }

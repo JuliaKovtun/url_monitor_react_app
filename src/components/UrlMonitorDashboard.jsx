@@ -37,21 +37,38 @@ const UrlMonitorDashboard = () => {
       setMonitors((prevMonitors) => {
         return prevMonitors.map((monitor) => {
           const update = updates.find((u) => u.monitor_id === monitor.id);
-          return update ? { ...monitor, ...update } : monitor;
+
+          if (update) {
+            return {
+              ...monitor,
+              status: update.status,
+              last_checked_at: update.last_checked_at,
+              checks: [...monitor.checks, update.check]
+            };
+          }
+
+          return monitor;
         });
       });
     }
   }, [updates]);
 
+  const handleMonitorCreation = (newMonitor) => {
+    setMonitors((prevMonitors) => [newMonitor, ...prevMonitors]);
+  };
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
-  // debugger;
+
   return (
-    <div>
-      <UrlMonitorForm/>
-      {monitors.map((monitor) => (
-        <UrlMonitorChart key={monitor.id} data={monitor} />
-      ))}
+    <div className="dashboard-container">
+      <UrlMonitorForm onSuccess={handleMonitorCreation} />
+      <h2>URL Monitor Dashboard</h2>
+      {monitors.length > 0 ? (
+        monitors.map((monitor) => <UrlMonitorChart key={monitor.id} data={monitor} />)
+      ) : (
+        <p>No URL monitors available.</p>
+      )}
     </div>
   );
 };
